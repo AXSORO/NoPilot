@@ -228,6 +228,7 @@ function Get-CopilotAppxPackages {
     try {
         return Get-AppxPackage -AllUsers | Where-Object {
             $_.Name -in $Script:CopilotAppxTargets -or
+            $_.Name -in $Script:CopilotAppxSystem -or
             $_.Name -match $Script:CopilotAppxMatcher -or
             $_.PackageFullName -match $Script:CopilotAppxMatcher
         }
@@ -253,8 +254,10 @@ $Script:TelemetryTasks = @(
 
 $Script:CopilotAppxMatcher = "Copilot"
 $Script:CopilotAppxTargets = @(
-    "MicrosoftWindows.Client.CoreAI",
     "MicrosoftWindows.Client.WebExperience"
+)
+$Script:CopilotAppxSystem = @(
+    "MicrosoftWindows.Client.CoreAI"
 )
 
 function Confirm-YesNo {
@@ -512,6 +515,11 @@ function Remove-CopilotAppx {
     }
 
     foreach ($pkg in $packages) {
+        if ($pkg.Name -in $Script:CopilotAppxSystem) {
+            Write-Host (" - {0} is a core system component; skipping removal (Windows blocks uninstall)." -f $pkg.Name) -ForegroundColor $Colors.Warn
+            Write-Host "   If Start menu shows an Uninstall option, try that manually; script will not force it." -ForegroundColor $Colors.Info
+            continue
+        }
         Write-Host (" - Found {0} ({1})" -f $pkg.Name, $pkg.PackageFullName) -ForegroundColor $Colors.Info
         try {
             Remove-AppxPackage -Package $pkg.PackageFullName -AllUsers -ErrorAction Stop
