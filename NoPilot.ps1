@@ -76,20 +76,6 @@ $NoPilotArt = @"
 
 
 "@
-$NoPilotArtSimple = @"
-   /|   /|
-  ( o . o )
- /|  v  |\_
-( |  -  |  )
-  \  ~  /
-   -----
-"@
-
-function Set-Utf8Console {
-    try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
-    try { chcp 65001 | Out-Null } catch {}
-}
-
 ###########################################################################
 # helpers and targets
 ###########################################################################
@@ -559,7 +545,6 @@ function Prompt-Reboot {
 # main flow
 ###########################################################################
 Write-Host "=== NoPilot v$($env:NoPilotVersion) :: Copilot Removal Tool ===" -ForegroundColor $Colors.Title
-Set-Utf8Console
 Write-Host $NoPilotArt -ForegroundColor $Colors.Info
 Write-Host "[Heads-up]  If you're insane and want CoPilot back, run NoPilot_reset.bat." -ForegroundColor $Colors.Info
 if (-not (Test-IsAdmin)) {
