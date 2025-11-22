@@ -76,6 +76,19 @@ $NoPilotArt = @"
 
 
 "@
+$NoPilotArtSimple = @"
+   /|   /|
+  ( o . o )
+ /|  v  |\_
+( |  -  |  )
+  \  ~  /
+   -----
+"@
+
+function Set-Utf8Console {
+    try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
+    try { chcp 65001 | Out-Null } catch {}
+}
 
 ###########################################################################
 # helpers and targets
@@ -225,6 +238,16 @@ $Script:TelemetryTargets = @(
     }
 )
 
+function Get-CopilotAppxPackages {
+    try {
+        return Get-AppxPackage -AllUsers | Where-Object {
+            $_.Name -match $Script:CopilotAppxMatcher -or $_.PackageFullName -match $Script:CopilotAppxMatcher
+        }
+    } catch {
+        return @()
+    }
+}
+
 # Telemetry services/tasks we consider safe to disable.
 $Script:TelemetryServices = @(
     "DiagTrack",                    # Connected User Experiences and Telemetry
@@ -239,6 +262,8 @@ $Script:TelemetryTasks = @(
     "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator",
     "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip"
 )
+
+$Script:CopilotAppxMatcher = "Copilot"
 
 function Confirm-YesNo {
     param(
@@ -480,6 +505,38 @@ function Disable-TelemetryServicesAndTasks {
     }
 }
 
+function Remove-CopilotAppx {
+    Write-Host "`n[Action] Looking for Microsoft 365 Copilot appx..." -ForegroundColor $Colors.Title
+
+    $isAdmin = Test-IsAdmin
+    if (-not $isAdmin) {
+        Write-Host " - Not elevated. App removal may fail; run as admin for full effect." -ForegroundColor $Colors.Warn
+    }
+
+    $packages = Get-CopilotAppxPackages
+    if ($packages.Count -eq 0) {
+        Write-Host " - No AppX packages matching 'Copilot' were found." -ForegroundColor $Colors.Muted
+        return
+    }
+
+    foreach ($pkg in $packages) {
+        Write-Host (" - Found {0} ({1})" -f $pkg.Name, $pkg.PackageFullName) -ForegroundColor $Colors.Info
+        try {
+            Remove-AppxPackage -Package $pkg.PackageFullName -AllUsers -ErrorAction Stop
+            Write-Host "   removed for all users." -ForegroundColor $Colors.Success
+        } catch {
+            Write-Host ("   removal failed -> {0}" -f $_.Exception.Message) -ForegroundColor $Colors.Error
+        }
+
+        try {
+            Remove-AppxProvisionedPackage -Online -PackageName $pkg.PackageFamilyName -ErrorAction Stop | Out-Null
+            Write-Host "   removed from provisioning." -ForegroundColor $Colors.Success
+        } catch {
+            Write-Host ("   provisioning removal failed -> {0}" -f $_.Exception.Message) -ForegroundColor $Colors.Muted
+        }
+    }
+}
+
 ###########################################################################
 # step 4: show status again
 ###########################################################################
@@ -502,15 +559,14 @@ function Prompt-Reboot {
 # main flow
 ###########################################################################
 Write-Host "=== NoPilot v$($env:NoPilotVersion) :: Copilot Removal Tool ===" -ForegroundColor $Colors.Title
+Set-Utf8Console
 Write-Host $NoPilotArt -ForegroundColor $Colors.Info
 Write-Host "[Heads-up]  If you're insane and want CoPilot back, run NoPilot_reset.bat." -ForegroundColor $Colors.Info
-Show-CopilotStatus
-
-if (-not $IsWindows) {
-    Write-Host "[Info] This script is for Windows only. Exiting without changes." -ForegroundColor $Colors.Warn
+if (-not (Test-IsAdmin)) {
+    Write-Host "[Error] Run this script in PowerShell as Administrator for changes to apply. Exiting." -ForegroundColor $Colors.Error
     return
 }
-
+Show-CopilotStatus
 Show-QuickHelp
 
 if (-not (Confirm-YesNo "[Confirm] Proceed with disabling Copilot/search bits? (y/N)")) {
@@ -526,6 +582,11 @@ if (Confirm-YesNo "[Optional] Also disable telemetry-related policies? (y/N)") {
     Disable-TelemetryServicesAndTasks
 } else {
     Write-Host "Telemetry left as-is." -ForegroundColor $Colors.Info
+}
+if (Confirm-YesNo "[Optional] Try removing Microsoft 365 Copilot appx if present? (y/N)") {
+    Remove-CopilotAppx
+} else {
+    Write-Host "Copilot appx left as-is." -ForegroundColor $Colors.Info
 }
 Pause-Beat 300
 Disable-CopilotServicesAndTasks
