@@ -1,4 +1,4 @@
-## hello, i hate copilot and windows 11 is full of some garbage that it seemingly doesn't want you to remove.
+﻿## hello, i hate copilot and windows 11 is full of some garbage that it seemingly doesn't want you to remove.
 ## if you don't need genAI in your face all the time while being held hostage within the windows ecosystem, this is for you :3
 # I highly recommend just using Win11 IoT LTSC, but reinstalling is a pain in the ass.
 
