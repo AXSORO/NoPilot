@@ -227,7 +227,9 @@ $Script:TelemetryTargets = @(
 function Get-CopilotAppxPackages {
     try {
         return Get-AppxPackage -AllUsers | Where-Object {
-            $_.Name -match $Script:CopilotAppxMatcher -or $_.PackageFullName -match $Script:CopilotAppxMatcher
+            $_.Name -in $Script:CopilotAppxTargets -or
+            $_.Name -match $Script:CopilotAppxMatcher -or
+            $_.PackageFullName -match $Script:CopilotAppxMatcher
         }
     } catch {
         return @()
@@ -250,6 +252,10 @@ $Script:TelemetryTasks = @(
 )
 
 $Script:CopilotAppxMatcher = "Copilot"
+$Script:CopilotAppxTargets = @(
+    "MicrosoftWindows.Client.CoreAI",
+    "MicrosoftWindows.Client.WebExperience"
+)
 
 function Confirm-YesNo {
     param(
@@ -492,7 +498,7 @@ function Disable-TelemetryServicesAndTasks {
 }
 
 function Remove-CopilotAppx {
-    Write-Host "`n[Action] Looking for Microsoft 365 Copilot appx..." -ForegroundColor $Colors.Title
+    Write-Host "`n[Action] Looking for Copilot app packages (CoreAI/WebExperience)..." -ForegroundColor $Colors.Title
 
     $isAdmin = Test-IsAdmin
     if (-not $isAdmin) {
@@ -501,7 +507,7 @@ function Remove-CopilotAppx {
 
     $packages = Get-CopilotAppxPackages
     if ($packages.Count -eq 0) {
-        Write-Host " - No AppX packages matching 'Copilot' were found." -ForegroundColor $Colors.Muted
+        Write-Host " - No targeted AppX packages were found." -ForegroundColor $Colors.Muted
         return
     }
 
@@ -568,7 +574,7 @@ if (Confirm-YesNo "[Optional] Also disable telemetry-related policies? (y/N)") {
 } else {
     Write-Host "Telemetry left as-is." -ForegroundColor $Colors.Info
 }
-if (Confirm-YesNo "[Optional] Try removing Microsoft 365 Copilot appx if present? (y/N)") {
+if (Confirm-YesNo "[Optional] Try removing Copilot app packages (CoreAI/WebExperience) if present? (y/N)") {
     Remove-CopilotAppx
 } else {
     Write-Host "Copilot appx left as-is." -ForegroundColor $Colors.Info
