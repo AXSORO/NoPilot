@@ -1,25 +1,24 @@
-NoPilot - Created by AXSORO 
+NoPilot - Simple Copilot removal tool (somewhat WIP)
 -------
-Copilot remover tool.
-
-What’s here
-- NoPilot.ps1 — main script; run as admin for full effect.
-- NoPilot_reset.bat — quick undo for Copilot/search bits (telemetry stays off).
-- dist/ — bundle-ready copy of the script, launcher, reset bat, and packaging notes.
-- mock/NoPilot_mock.ps1 — simulation only; previews UI on macOS/Linux, no changes.
+Files
+- NoPilot.ps1 — main script to be ran as admin from powershell
+- NoPilot_reset.bat — restores changes, except telemetry disable tasks
+- dist/ — wip for exe package
+- mock/NoPilot_mock.ps1 — visual sim test, working from macOS
 
 Quick start (Windows)
-- Right-click NoPilot.ps1 -> Run with PowerShell (as admin). Follow prompts.
-- Optional telemetry kill switch during the run.
-- Expect a reboot prompt for clean results.
+- Windows Key + X -> Windows PowerShell (Admin) -> Navigate to directory and run script
+- If you get an error for not being able to run scripts, check that set-executionpolicy setting is "bypass" or "unrestricted" 
+- Optional telemetry disable prompts
+- reboot
 
 Undo
-- Run NoPilot_reset.bat as admin to re-enable Copilot/search bits and copilot-named services/tasks.
+- Run NoPilot_reset.bat as admin to restore copilot changes
 - Telemetry stays off by design; rerun the main script with telemetry disabled if you want it off again.
 
 Packaging to EXE
-- On Windows: see dist/README_packaging.txt for the ps2exe command and signing tips.
+- Currently a WIP as per the dist/ directory
 
 Notes
-- Best viewed in Windows Terminal with a Unicode-friendly font for the ASCII art.
-- Keep an eye out after big Windows updates; rerun if Copilot resurfaces.
+- Run in Windows Terminal, not legacy command window 
+- This was tested on Windows 11 25H2 - future updates might need the script to be reworked. 
